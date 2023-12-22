@@ -2,8 +2,17 @@ import numpy as np
 from scipy.interpolate import pchip
 
 
-def tseriesinterp(m, trorig, trnew, dim=None, numsamples=None,
-                  fakeout=0, wantreplicate=False, interpmethod='pchip', slicetimes=None):
+def tseriesinterp(
+    m,
+    trorig,
+    trnew,
+    dim=None,
+    numsamples=None,
+    fakeout=0,
+    wantreplicate=False,
+    interpmethod="pchip",
+    slicetimes=None,
+):
     """Use interp1 to interpolate < m > (with extrapolation) such that
        the new version of < m > coincides with the original version of < m >
        at the first time point.  (If < fakeout > is used, the new version
@@ -71,7 +80,7 @@ def tseriesinterp(m, trorig, trnew, dim=None, numsamples=None,
 
     # input
     if dim is None:
-        dim = len(m.shape)-1
+        dim = len(m.shape) - 1
 
     # prep 2D
     msize = np.asarray(m.shape)
@@ -80,29 +89,29 @@ def tseriesinterp(m, trorig, trnew, dim=None, numsamples=None,
 
     # calc
     if numsamples is None:
-        numsamples = int(np.ceil((mflat.shape[0]*trorig)/trnew))
+        numsamples = int(np.ceil((mflat.shape[0] * trorig) / trnew))
 
     # do it
     if wantreplicate:
-
-        pre_pad = np.array((-3, -2, -1))*trorig
-        tps = np.arange(0, trorig*mflat.shape[0], trorig)
-        post_pad = (mflat.shape[0]-1)*trorig+np.array((1, 2, 3))*trorig
+        pre_pad = np.array((-3, -2, -1)) * trorig
+        tps = np.arange(0, trorig * mflat.shape[0], trorig)
+        post_pad = (mflat.shape[0] - 1) * trorig + np.array((1, 2, 3)) * trorig
 
         timeorig = np.r_[pre_pad, tps, post_pad]
 
     else:
+        timeorig = [
+            0.0 + x * (trorig * mflat.shape[0]) / len(mflat) for x in range(len(mflat))
+        ]
 
-        timeorig = \
-            [0.0 + x*(trorig*mflat.shape[0])/len(mflat)
-                for x in range(len(mflat))]
-
-    timenew = [0.0 + x*(trnew*numsamples) /
-               numsamples for x in range(int(numsamples))] - fakeout
+    timenew = [
+        0.0 + x * (trnew * numsamples) / numsamples for x in range(int(numsamples))
+    ] - fakeout
 
     # do in chunks
     chunks = chunking(
-        list(range(mflat.shape[1])), int(np.ceil(mflat.shape[1]/numchunks)))
+        list(range(mflat.shape[1])), int(np.ceil(mflat.shape[1] / numchunks))
+    )
 
     temp = []
     for chunk in chunks:
@@ -110,14 +119,11 @@ def tseriesinterp(m, trorig, trnew, dim=None, numsamples=None,
             this_ts = mflat[:, chunk]
             pre_pad = np.tile(mflat[0, chunk], (3, 1))
             post_pad = np.tile(mflat[-1, chunk], (3, 1))
-            dat = np.r_[pre_pad,
-                        this_ts,
-                        post_pad]
+            dat = np.r_[pre_pad, this_ts, post_pad]
 
             temp.append(pchip(timeorig, dat, extrapolate=True)(timenew))
         else:
-            temp.append(pchip(timeorig, mflat[:, chunk],
-                              extrapolate=True)(timenew))
+            temp.append(pchip(timeorig, mflat[:, chunk], extrapolate=True)(timenew))
     stacktemp = np.hstack(temp)
 
     # prepare output
@@ -144,7 +150,7 @@ def ang2complex(m):
 
     x = np.cos(m)
     y = np.sin(m)
-    f = x + 1j*y
+    f = x + 1j * y
 
     return f, x, y
 
@@ -186,7 +192,7 @@ def reshape2D(m, dim):
     """
 
     # permute and then squish into a 2D matrix
-    f = np.moveaxis(m, dim, 0).reshape((m.shape[dim], -1), order='F')
+    f = np.moveaxis(m, dim, 0).reshape((m.shape[dim], -1), order="F")
 
     return f
 
@@ -219,13 +225,13 @@ def reshape2D_undo(f, dim, msize):
     msizetmp.insert(0, msize[dim])
 
     # unsquish and the permute back to the original order
-    m = np.moveaxis(f.reshape(msizetmp, order='F'), 0, dim)
+    m = np.moveaxis(f.reshape(msizetmp, order="F"), 0, dim)
 
     return m
 
 
 def chunking(vect, num, chunknum=None):
-    """ chunking
+    """chunking
     Input:
         <vect> is a array
         <num> is desired length of a chunk
@@ -252,17 +258,17 @@ def chunking(vect, num, chunknum=None):
 
     """
     if chunknum is None:
-        nchunk = int(np.ceil(len(vect)/num))
+        nchunk = int(np.ceil(len(vect) / num))
         f = []
         for point in range(nchunk):
-            f.append(vect[point*num:np.min((len(vect), int((point+1)*num)))])
+            f.append(vect[point * num : np.min((len(vect), int((point + 1) * num)))])
 
-        return np.asarray(f)
+        return np.asarray(f, dtype=np.object)
     else:
         f = chunking(vect, num)
         # double check that these behave like in matlab (xbegin)
-        xbegin = (chunknum-1)*num+1
+        xbegin = (chunknum - 1) * num + 1
         # double check that these behave like in matlab (xend)
-        xend = np.min((len(vect), chunknum*num))
+        xend = np.min((len(vect), chunknum * num))
 
-        return np.asarray(f[num-1]), xbegin, xend
+        return np.asarray(f[num - 1], dtype=np.object), xbegin, xend
