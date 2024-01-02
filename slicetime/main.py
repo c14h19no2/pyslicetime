@@ -41,7 +41,7 @@ def run_slicetime(
         this_slice_ts = data[:, :, slice_i, :]
         # this_slice_ts.shape = (64, 64, 216) # time dim = 2
 
-        this_slice_order = sliceorder[slice_i % len(sliceorder)]
+        this_slice_order = sliceorder[slice_i]
         max_slice = np.max(sliceorder)
         fakeout = -(((1 - this_slice_order) / max_slice) * tr_old) - offset
         # print(fakeout)
