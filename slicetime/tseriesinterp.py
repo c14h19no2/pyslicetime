@@ -115,6 +115,7 @@ def tseriesinterp(
 
     temp = []
     for chunk in chunks:
+        chunk = np.asarray(chunk, dtype=int)
         if wantreplicate:
             this_ts = mflat[:, chunk]
             pre_pad = np.tile(mflat[0, chunk], (3, 1))
